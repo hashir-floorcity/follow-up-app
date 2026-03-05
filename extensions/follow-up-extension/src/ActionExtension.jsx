@@ -1,5 +1,5 @@
 import "@shopify/ui-extensions/preact";
-import {render} from "preact";
+import { render } from "preact";
 
 export default async () => {
   render(<Extension />, document.body);
@@ -7,9 +7,9 @@ export default async () => {
 
 function Extension() {
 
-  const {close, data} = shopify;
+  const { close, data } = shopify;
   const hasFollowUpTag =
-  data.selected?.[0]?.tags?.includes("follow-up-requested");
+    data.selected?.[0]?.tags?.includes("follow-up-requested");
 
   const sendFollowUp = () => {
     const draftId = data.selected?.[0]?.id;
@@ -46,13 +46,14 @@ function Extension() {
 
   return (
     <s-admin-action>
+      <s-text>Are you sure you want to send a follow-up request?</s-text>
       <s-button
-  slot="primary-action"
-  disabled={hasFollowUpTag}
-  onClick={sendFollowUp}
->
-  {hasFollowUpTag ? "Follow-Up Requested" : "Follow-Up"}
-</s-button>
+        slot="primary-action"
+        disabled={hasFollowUpTag}
+        onClick={sendFollowUp}
+      >
+        {hasFollowUpTag ? "Follow-Up Requested" : "Follow-Up"}
+      </s-button>
     </s-admin-action>
   );
 }

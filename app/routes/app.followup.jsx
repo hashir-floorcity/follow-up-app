@@ -1,25 +1,29 @@
 import { useLoaderData } from "react-router";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
   const followUps = await prisma.followUp.findMany({
     orderBy: { createdAt: "desc" }
   });
 
-  return { followUps };
+  return { 
+    followUps,
+    shop: session.shop 
+  };
 };
 
 export default function FollowUpPage() {
-  const { followUps } = useLoaderData();
+  const { followUps, shop } = useLoaderData();
 
   return (
     <s-page heading="Follow-Up">
 
       {/* Activity Summary */}
-      <s-section heading="Activity Summary">
+      {/* <s-section heading="Activity Summary">
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(5,1fr)",
@@ -52,10 +56,10 @@ export default function FollowUpPage() {
           </div>
 
         </div>
-      </s-section>
+      </s-section> */}
 
       {/* Draft Orders Table */}
-      <s-section heading="Active Draft Orders">
+      <s-section>
 
         <table className="followupTable">
           <thead>
@@ -64,8 +68,8 @@ export default function FollowUpPage() {
               <th>Customer</th>
               <th>Email</th>
               <th>Total</th>
-              <th>Next Follow-up</th>
-              <th>Attempts</th>
+              {/* <th>Next Follow-up</th>
+              <th>Attempts</th> */}
               <th>Status</th>
             </tr>
           </thead>
@@ -74,15 +78,21 @@ export default function FollowUpPage() {
             {followUps.map((f) => {
 
               const orderNumber = f.draftId?.split("/").pop();
+              const shopName = shop.replace('.myshopify.com', '');
+              const draftOrderUrl = `https://admin.shopify.com/store/${shopName}/draft_orders/${orderNumber}`;
 
               return (
                 <tr key={f.id}>
-                  <td>#{orderNumber}</td>
+                  <td>
+                    <s-link href={draftOrderUrl} className="orderLink">
+                      #{orderNumber}
+                    </s-link>
+                  </td>
                   <td>{f.customer || "Unknown"}</td>
                   <td>{f.email || "N/A"}</td>
                   <td>{f.total || "-"}</td>
-                  <td>{f.nextFollowUp || "-"}</td>
-                  <td>{f.attempts || 0}</td>
+                  {/* <td>{f.nextFollowUp || "-"}</td>
+                  <td>{f.attempts || 0}</td> */}
                   <td>
                     <span className={`status ${f.status}`}>
                       {f.status}
@@ -98,6 +108,28 @@ export default function FollowUpPage() {
 
 
       <style>{`
+
+        .orderLink {
+          background: none;
+          border: none;
+          color: #000000 !important;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 13px;
+          padding: 0;
+          text-decoration: none !important;
+          display: inline;
+        }
+
+        .orderLink:hover {
+          color: #333333 !important;
+          text-decoration: underline !important;
+        }
+
+        /* Override s-link default styles */
+        s-link.orderLink {
+          color: #000000 !important;
+        }
 
         .summaryCard{
           background:white;

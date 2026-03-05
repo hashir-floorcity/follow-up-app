@@ -6,7 +6,7 @@ export async function loader() {
 
 export async function action({ request }) {
 
-  // Handle CORS preflight
+ 
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -19,7 +19,6 @@ export async function action({ request }) {
     });
   }
 
-  // Allow POST requests
   if (request.method !== "POST") {
     return new Response(
       JSON.stringify({
@@ -61,7 +60,6 @@ export async function action({ request }) {
       );
     }
 
-    // avoid duplicate records if the draft order has already been pushed
     let followUp = await prisma.followUp.findFirst({
       where: { draftId: draftGid }
     });
@@ -69,7 +67,6 @@ export async function action({ request }) {
       followUp = await prisma.followUp.create({
         data: {
           draftId: draftGid,
-          // allow the client to provide some metadata if available
           email: body.email || undefined,
           customer: body.customer || undefined,
           total: body.total || undefined,

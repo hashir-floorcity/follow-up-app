@@ -1,0 +1,7 @@
+-- CreateTable
+CREATE TABLE "FollowUp" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "draftId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'new',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

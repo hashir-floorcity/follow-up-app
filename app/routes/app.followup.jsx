@@ -85,7 +85,7 @@ export default function FollowUpPage() {
                 <tr key={f.id}>
                   <td>
                     <s-link href={draftOrderUrl} className="orderLink">
-                      #{orderNumber}
+                      {f.orderName || `#${orderNumber}`}
                     </s-link>
                   </td>
                   <td>{f.customer || "Unknown"}</td>

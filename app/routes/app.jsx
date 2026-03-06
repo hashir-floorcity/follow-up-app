@@ -14,9 +14,9 @@ export default function App() {
 
   return (
     <AppProvider embedded apiKey={apiKey}>
-      <s-app-nav>
+      {/* <s-app-nav>
         <s-link href="/app/followup">Follow-Up App</s-link>
-      </s-app-nav>
+      </s-app-nav> */}
       <Outlet />
     </AppProvider>
   );

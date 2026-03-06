@@ -2,7 +2,7 @@
 
 client_id = "55693e9d65423b8fe84a972718637a5f"
 name = "Follow-Up App"
-application_url = "https://example.com"
+application_url = "https://followup-app-47285870641.us-west2.run.app"
 embedded = true
 
 [build]
@@ -30,7 +30,9 @@ optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ ]
+redirect_urls = [
+  "https://followup-app-47285870641.us-west2.run.app/auth/callback"
+]
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"

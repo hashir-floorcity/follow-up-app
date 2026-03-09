@@ -1070,6 +1070,74 @@ export default function FollowUpPage() {
         font-size:12px;
         color:#6b7280;
       }
+        .modalOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(17,24,39,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.modalContent{
+  background:#fff;
+  width:min(420px, 92vw);
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 20px 50px rgba(0,0,0,0.18);
+  padding:20px;
+}
+
+.modalContent h3{
+  margin:0 0 8px 0;
+  font-size:18px;
+  font-weight:600;
+  color:#111827;
+}
+
+.modalContent p{
+  margin:0 0 18px 0;
+  font-size:14px;
+  line-height:1.5;
+  color:#6b7280;
+}
+
+.modalButtons{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.cancelButton{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+  padding:8px 14px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+}
+
+.cancelButton:hover{
+  background:#f3f4f6;
+}
+
+.confirmButton{
+  background:#ef4444;
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+}
+
+.confirmButton:hover{
+  background:#dc2626;
+}
       `}</style>
 
     </s-page>

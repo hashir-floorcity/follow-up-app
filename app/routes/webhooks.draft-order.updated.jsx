@@ -3,7 +3,7 @@ import prisma from "../db.server";
 
 export const action = async ({ request }) => {
   console.log("Webhook received for draft order update");
-  
+
   try {
     const { payload, topic, shop } = await authenticate.webhook(request);
     console.log(`Received ${topic} webhook for ${shop}`);
@@ -36,6 +36,7 @@ export const action = async ({ request }) => {
         draftId: draftGid,
         orderName: payload.name || "N/A",
         email: payload.email || "N/A",
+        phone: payload.phone || payload.customer?.phone || "N/A",
         customer: payload.customer
           ? `${payload.customer.first_name || ""} ${payload.customer.last_name || ""}`.trim() || "Unknown"
           : "Unknown",
@@ -49,7 +50,7 @@ export const action = async ({ request }) => {
 
   } catch (error) {
     console.error("Error processing draft order webhook:", error);
-    return new Response(JSON.stringify({ error: error.message }), { 
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

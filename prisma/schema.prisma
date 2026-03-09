@@ -34,12 +34,22 @@ model Session {
 }
 
 model FollowUp {
-  id        Int      @id @default(autoincrement())
-  draftId   String
-  orderName String?
-  email     String?
-  customer  String?
-  total     String?
-  status    String   @default("new")
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  draftId      String
+  orderName    String?
+  email        String?
+  customer     String?
+  phone        String?
+  total        String?
+  
+  // Follow-up tracking
+  attempts     Int      @default(0)
+  lastOutcome  String?
+  nextFollowUp DateTime?
+  notes        String?
+  callHistory  String?  // JSON string
+  
+  status       String   @default("new")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }

@@ -616,7 +616,7 @@ export default function FollowUpPage() {
   }
 
   return (
-    <s-page heading="Follow-Up">
+    <s-page heading="Follow-Up App">
       <s-section heading="Activity Summary">
        <div className="summaryGrid">
 
@@ -1075,7 +1075,7 @@ export default function FollowUpPage() {
         .modalOverlay{
   position:fixed;
   inset:0;
-  background:rgba(17,24,39,0.45);
+  background:rgba(17,24,39,0.25);
   display:flex;
   align-items:center;
   justify-content:center;

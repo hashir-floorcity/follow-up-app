@@ -424,6 +424,7 @@ export default function FollowUpPage() {
             border-radius:10px;
             border:1px solid #e5e7eb;
             padding:28px;
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
           }
 
           /* Top navigation */
@@ -488,11 +489,11 @@ export default function FollowUpPage() {
             border:1px solid #e5e7eb;
             border-radius:6px;
             padding:14px;
-            font-family:SFMono-Regular,Menlo,Monaco,monospace;
             font-size:12px;
             line-height:1.7;
             max-height:160px;
             overflow:auto;
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
           }
 
           .callEntry{
@@ -512,6 +513,7 @@ export default function FollowUpPage() {
             font-size:13px;
             resize:vertical;
             box-sizing:border-box;
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
           }
 
           .callNotesArea:focus{
@@ -1087,6 +1089,7 @@ export default function FollowUpPage() {
   border:1px solid #e5e7eb;
   box-shadow:0 20px 50px rgba(0,0,0,0.18);
   padding:20px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 
 .modalContent h3{

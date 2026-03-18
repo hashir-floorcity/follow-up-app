@@ -616,7 +616,7 @@ export default function FollowUpPage() {
   }
 
   return (
-    <s-page heading="Follow-Up App">
+    <s-page heading="Follow-Up">
       <s-section heading="Activity Summary">
        <div className="summaryGrid">
 

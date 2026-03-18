@@ -1,5 +1,5 @@
 {
-  "name": "follow-up-app",
+  "name": "follow-up",
   "private": true,
   "scripts": {
     "build": "react-router build",

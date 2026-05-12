@@ -39,8 +39,29 @@ export async function action({ request }) {
 
   try {
     const body = await request.json();
+    const { draftGid, tags } = body;
 
-    const { draftGid } = body;
+    const tagList = Array.isArray(tags)
+      ? tags
+      : typeof tags === "string"
+      ? tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+      : [];
+
+    if (!tagList.includes("follow-up-requested")) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Draft order must include follow-up-requested tag to create a follow-up"
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
+        }
+      );
+    }
 
     console.log("Creating follow-up for draft:", draftGid);
 

@@ -9,6 +9,15 @@ export const loader = async ({ request }) => {
 
   const { admin } = await authenticate.admin(request);
 
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  await prisma.followUp.updateMany({
+    where: {
+      status: "new",
+      createdAt: { lt: sevenDaysAgo }
+    },
+    data: { status: "auto-archived" }
+  });
+
   const followUps = await prisma.followUp.findMany({
     orderBy: { createdAt: "desc" }
   });
@@ -388,6 +397,13 @@ export default function FollowUpPage() {
     return created >= monthStart;
   }).length;
 
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekToDateFollowUps = followUps.filter(f => {
+    const created = new Date(f.createdAt);
+    return created >= weekStart;
+  }).length;
+
   const attemptsToday = followUps.reduce((sum, f) => {
     const callHistory = f.callHistory ? JSON.parse(f.callHistory) : [];
     const todayCalls = callHistory.filter(call => {
@@ -631,6 +647,11 @@ export default function FollowUpPage() {
           </div>
 
           <div className="summaryCard">
+            <div className="label">Week to Date</div>
+            <div className="value">{weekToDateFollowUps}</div>
+          </div>
+
+          <div className="summaryCard">
             <div className="label">Month to Date</div>
             <div className="value">{monthToDateFollowUps}</div>
           </div>
@@ -671,11 +692,10 @@ export default function FollowUpPage() {
               <tr>
                 <th>Draft Order</th>
                 <th>Customer</th>
-                <th>Email</th>
+                {/* <th>Email</th> */}
                 <th>Total</th>
-                <th>Next Follow-up</th>
+                {/* <th>Next Follow-up</th> */}
                 <th>Last Outcome</th>
-                <th>Attempts</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -725,18 +745,13 @@ export default function FollowUpPage() {
                         </button>
                       </td>
                       <td>{f.customer || "Unknown"}</td>
-                      <td title={f.email || "N/A"}>{f.email || "N/A"}</td>
                       <td>${f.total || "0"}</td>
-                      <td>{nextDate}</td>
                       <td>
                         {f.lastOutcome ? (
                           <span className={`outcome outcome-${f.lastOutcome?.toLowerCase().replace(' ', '-')}`}>
                             {f.lastOutcome}
                           </span>
                         ) : '-'}
-                      </td>
-                      <td>
-                        <span className="attempts-badge">{f.attempts || 0}</span>
                       </td>
                       <td>
                         <span className={`status ${f.status}`}>
@@ -884,7 +899,7 @@ export default function FollowUpPage() {
       }
 
       .followupTable th{
-        text-align:left;
+         text-align:center;
         font-weight:600;
         padding:10px 12px;
         font-size:12px;
@@ -902,6 +917,17 @@ export default function FollowUpPage() {
         white-space:nowrap;
         overflow:hidden;
         text-overflow:ellipsis;
+      }
+
+      .followupTable td,
+      .followupTable th {
+        text-align: center;
+      }
+
+      .followupTable th:nth-child(2),
+      .followupTable td:nth-child(2){
+        width:260px;
+        text-align:left;
       }
 
       .followupTable tbody tr{
@@ -923,17 +949,20 @@ export default function FollowUpPage() {
 
       .followupTable th:nth-child(2),
       .followupTable td:nth-child(2){
-        width:110px;
+        width:175px;
+        text-align:left;
+        white-space:normal;
       }
+
 
       .followupTable th:nth-child(3),
       .followupTable td:nth-child(3){
-        width:220px;
+        width:160px;
       }
 
       .followupTable th:nth-child(4),
       .followupTable td:nth-child(4){
-        width:90px;
+        width:110px;
       }
 
       .followupTable th:nth-child(5),
@@ -943,7 +972,7 @@ export default function FollowUpPage() {
 
       .followupTable th:nth-child(6),
       .followupTable td:nth-child(6){
-        width:120px;
+        width:100px;
       }
 
       .followupTable th:nth-child(7),

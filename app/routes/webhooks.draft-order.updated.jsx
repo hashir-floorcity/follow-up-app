@@ -1,6 +1,18 @@
 import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 
+function hasFollowUpRequestedTag(tags) {
+  if (!tags) return false;
+
+  const normalizedTags = Array.isArray(tags)
+    ? tags
+    : String(tags).split(",");
+
+  return normalizedTags
+    .map(tag => String(tag).trim().toLowerCase())
+    .includes("follow-up-requested");
+}
+
 export const action = async ({ request }) => {
   console.log("Webhook received for draft order update");
 
@@ -12,13 +24,14 @@ export const action = async ({ request }) => {
     const draftGid = `gid://shopify/DraftOrder/${draftOrderId}`;
     console.log("Draft order updated:", draftOrderId);
 
-    const tags = payload.tags ? payload.tags.split(',').map(tag => tag.trim()) : [];
-    const hasFollowUpTag = tags.includes('follow-up-requested');
+    const hasFollowUpTag = hasFollowUpRequestedTag(payload.tags);
 
     if (!hasFollowUpTag) {
-      console.log("No follow-up tag found, skipping");
+      console.log("No follow-up tag found, skipping draft order:", draftOrderId);
       return new Response(null, { status: 200 });
     }
+
+    console.log("Follow-up tag found, processing draft order:", draftOrderId);
 
     const existingFollowUp = await prisma.followUp.findFirst({
       where: {

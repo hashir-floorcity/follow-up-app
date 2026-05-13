@@ -1,3 +1,7 @@
-.cache
-build
 node_modules
+.cache
+.build
+dev.sqlite
+dev.sqlite-journal
+*.sqlite
+*.sqlite-journal

@@ -4,14 +4,29 @@ import prisma from "../db.server";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
+function normalizeDraftOrderGid(draftId) {
+  if (!draftId) return null;
+
+  const value = String(draftId);
+
+  if (value.startsWith("gid://shopify/DraftOrder/")) {
+    return value;
+  }
+
+  return `gid://shopify/DraftOrder/${value}`;
+}
+
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
-
   const { admin } = await authenticate.admin(request);
+
+  console.log("=== Follow-Up App Loader ===");
+  console.log("Shop domain:", session.shop);
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   await prisma.followUp.updateMany({
     where: {
+      shop: session.shop,
       status: "new",
       createdAt: { lt: sevenDaysAgo }
     },
@@ -19,16 +34,22 @@ export const loader = async ({ request }) => {
   });
 
   const followUps = await prisma.followUp.findMany({
+    where: { shop: session.shop },
     orderBy: { createdAt: "desc" }
   });
 
-  
+  console.log("Loaded follow-ups for shop:", {
+    shop: session.shop,
+    count: followUps.length
+  });
+
   const followUpsWithInvoice = await Promise.all(
     followUps.map(async (f) => {
       try {
+        const draftOrderGid = `gid://shopify/DraftOrder/${f.draftId}`;
         const response = await admin.graphql(`
         query {
-          draftOrder(id: "${f.draftId}") {
+          draftOrder(id: "${draftOrderGid}") {
             invoiceSentAt
           }
         }
@@ -42,7 +63,7 @@ export const loader = async ({ request }) => {
           invoiceSentAt
         };
       } catch (err) {
-        console.log("Invoice fetch error:", err);
+        console.log("Invoice fetch error for draftId:", f.draftId, err.message);
         return {
           ...f,
           invoiceSentAt: null
@@ -57,7 +78,12 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
+
+  console.log("=== Follow-Up App Action ===");
+  console.log("Shop:", session.shop);
+  console.log("Action method:", request.method);
 
   const formData = await request.formData();
   const id = formData.get("id");
@@ -66,12 +92,91 @@ export const action = async ({ request }) => {
   const notes = formData.get("notes");
   const status = formData.get("status");
 
-  
   if (id && !outcome && !status) {
-    await prisma.followUp.delete({
-      where: { id: parseInt(id) }
-    });
-    return { success: true, action: 'delete' };
+    console.log("Processing DELETE for id:", id, "shop:", session.shop);
+
+    try {
+      const followUp = await prisma.followUp.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!followUp) {
+        console.error("Follow-up not found:", id);
+        return { success: false, error: "Follow-up not found" };
+      }
+
+      console.log("Found follow-up:", {
+        id: followUp.id,
+        shop: followUp.shop,
+        draftId: followUp.draftId
+      });
+
+      if (followUp.shop !== session.shop) {
+        console.error("Shop mismatch - unauthorized delete attempt");
+        return { success: false, error: "Unauthorized" };
+      }
+
+      const draftOrderGid = normalizeDraftOrderGid(followUp.draftId);
+      console.log("Attempting to remove tag from draft order:", draftOrderGid);
+
+      try {
+        const tagRemovalResponse = await admin.graphql(
+          `mutation removeFollowUpTag($id: ID!, $tags: [String!]!) {
+      tagsRemove(id: $id, tags: $tags) {
+        node {
+          id
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }`,
+          {
+            variables: {
+              id: draftOrderGid,
+              tags: ["follow-up-requested"],
+            },
+          }
+        );
+
+        const updateJson = await tagRemovalResponse.json();
+
+        console.log("tagsRemove mutation response:", {
+          node: updateJson.data?.tagsRemove?.node,
+          userErrors: updateJson.data?.tagsRemove?.userErrors,
+          graphqlErrors: updateJson.errors,
+        });
+
+        if (updateJson.errors?.length) {
+          console.error("GraphQL errors removing follow-up tag:", updateJson.errors);
+        }
+
+        if (updateJson.data?.tagsRemove?.userErrors?.length) {
+          console.error("Shopify user errors removing follow-up tag:", updateJson.data.tagsRemove.userErrors);
+        }
+      } catch (tagErr) {
+        console.error("Error removing follow-up tag from draft order:", {
+          draftOrderGid,
+          message: tagErr.message,
+        });
+      }
+
+      const deleted = await prisma.followUp.delete({
+        where: { id: parseInt(id) }
+      });
+
+      console.log("Follow-up deleted from database:", deleted.id);
+      return { success: true, action: 'delete' };
+
+    } catch (error) {
+      console.error("Error in delete action:", {
+        id,
+        message: error.message,
+        stack: error.stack
+      });
+      return { success: false, error: error.message };
+    }
   }
 
   if (id && outcome) {
@@ -347,13 +452,23 @@ export default function FollowUpPage() {
   const itemsPerPage = 10;
 
   const filteredFollowUps = followUps.filter((f) => {
-    const query = search.toLowerCase();
+    const query = search.trim().toLowerCase();
 
-    return (
-      f.customer?.toLowerCase().includes(query) ||
-      f.email?.toLowerCase().includes(query) ||
-      f.orderName?.toLowerCase().includes(query)
-    );
+    if (!query) return true;
+
+    return [
+      f.customer,
+      f.email,
+      f.orderName,
+      f.draftId,
+      f.phone,
+      f.total,
+      f.status,
+    ]
+      .filter(Boolean)
+      .some((value) =>
+        String(value).toLowerCase().includes(query)
+      );
   });
 
   const totalPages = Math.ceil(filteredFollowUps.length / itemsPerPage);
@@ -634,7 +749,7 @@ export default function FollowUpPage() {
   return (
     <s-page heading="Follow-Up">
       <s-section heading="Activity Summary">
-       <div className="summaryGrid">
+        <div className="summaryGrid">
 
           <div className="summaryCard">
             <div className="label">Today</div>
@@ -783,7 +898,7 @@ export default function FollowUpPage() {
           </span>
 
           <button
-            disabled={page === totalPages}
+            disabled={page >= (totalPages || 1)}
             onClick={() => setPage(page + 1)}
             className="pageButton"
           >
@@ -799,7 +914,7 @@ export default function FollowUpPage() {
         /* SUMMARY CARDS */
       .summaryGrid{
         display:grid;
-        grid-template-columns:repeat(5,1fr);
+        grid-template-columns:repeat(3,1fr);
         gap:16px;
       }
 

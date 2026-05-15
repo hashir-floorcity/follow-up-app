@@ -96,7 +96,19 @@ export const action = async ({ request }) => {
     const hasFollowUpTag = hasFollowUpRequestedTag(payload.tags);
 
     if (!hasFollowUpTag) {
-      console.log("No follow-up tag found, skipping draft order:", draftOrderId);
+      const deletedFollowUp = await prisma.followUp.deleteMany({
+        where: {
+          shop,
+          draftId: draftOrderId,
+        },
+      });
+
+      console.log("No follow-up tag found. Deleted follow-up record if it existed:", {
+        shop,
+        draftOrderId,
+        deletedCount: deletedFollowUp.count,
+      });
+
       return new Response(null, { status: 200 });
     }
 
@@ -141,10 +153,10 @@ export const action = async ({ request }) => {
 
           phone: shouldReplaceValue(existingFollowUp.phone)
             ? payload.phone ||
-              payload.customer?.phone ||
-              payload.shipping_address?.phone ||
-              payload.billing_address?.phone ||
-              undefined
+            payload.customer?.phone ||
+            payload.shipping_address?.phone ||
+            payload.billing_address?.phone ||
+            undefined
             : existingFollowUp.phone,
 
           customer: shouldReplaceValue(existingFollowUp.customer)
